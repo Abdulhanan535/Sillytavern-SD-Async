@@ -255,9 +255,12 @@ async function handleAsyncGeneration(args, value) {
 jQuery(async () => {
     loadSettings();
 
-    // Inject settings panel directly (no template fetch needed)
-    const container = document.getElementById('extensions_settings2') ?? document.getElementById('extensions_settings');
-    if (container) {
+    // Delay to ensure ST has rendered the extensions settings panel
+    setTimeout(() => {
+        const container = document.getElementById('extensions_settings2') ?? document.getElementById('extensions_settings');
+        LOG('Settings container found:', container?.id ?? 'NONE');
+        if (!container) return;
+
         const wrapper = document.createElement('div');
         wrapper.id = 'sd-power-tools-settings-wrapper';
         wrapper.innerHTML = `
@@ -278,7 +281,9 @@ jQuery(async () => {
             </div>`;
         container.appendChild(wrapper);
         initSettingsPanel();
-    }
+        LOG('Settings panel injected.');
+    }, 500);
+
     vnModule.onSpriteShown = applySettings;
 
     const originalToastrInfo = toastr.info;
