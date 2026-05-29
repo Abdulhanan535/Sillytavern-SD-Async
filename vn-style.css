@@ -34,15 +34,3 @@
     flex: 1;
 }
 
-#expression-image {
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    transition: box-shadow 0.3s ease;
-    cursor: pointer;
-}
-
-#expression-image:hover,
-#expression-image:active {
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-    -webkit-touch-callout: none;
-    user-select: none;
-}
