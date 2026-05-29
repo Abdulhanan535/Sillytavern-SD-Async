@@ -1,7 +1,7 @@
 /**
- * SD Power Tools — Async SD generation with VN sprite display
+ * SD Power Tools — Async SD generation
  *
- * /sd-async — generate images in background, optionally display as VN sprite
+ * /sd-async — generate images in background
  */
 
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
@@ -13,7 +13,6 @@ import { isTrueBoolean } from '../../../utils.js';
 import { oai_settings, sendOpenAIRequest } from '../../../openai.js';
 import { CONNECT_API_MAP } from '../../../slash-commands.js';
 import { getContext } from '../../../extensions.js';
-import { showVnSprite } from './vn.js';
 
 const EXT_NAME = 'sd-power-tools';
 const LOG = (...args) => console.log(`[${EXT_NAME}]`, ...args);
@@ -110,8 +109,6 @@ async function handleAsyncGeneration(args, value) {
     const pipelineApi = args?.api ? String(args.api) : '';
     const pipelinePrompt1 = args?.prompt_1 ? String(args.prompt_1) : '';
     const pipelinePrompt2 = args?.prompt_2 ? String(args.prompt_2) : '';
-    const displayAsVn = isTrueBoolean(args?.vn);
-
     (async () => {
         try {
             let finalTrigger = String(value || '');
@@ -143,11 +140,6 @@ async function handleAsyncGeneration(args, value) {
             const ctx = getContext();
             const cmdResult = await ctx.executeSlashCommandsWithOptions(commandString);
             const imagePath = String(cmdResult?.pipe || '').replace(/\\/g, '/');
-
-            // Show as VN sprite if requested
-            if (displayAsVn && imagePath) {
-                showVnSprite(imagePath);
-            }
 
             if (callbackVar && imagePath) {
                 try {
@@ -199,14 +191,11 @@ jQuery(async () => {
         name: 'sd-async',
         aliases: ['imagine-async', 'img-async'],
         returns: 'Status string indicating generation has started in background',
-        helpString: 'Generates SD images asynchronously. Use vn=true to display output as a VN character sprite behind the chat.',
+        helpString: 'Generates SD images asynchronously.',
         unnamedArgumentList: [
             new SlashCommandArgument('prompt', 'The image generation prompt or prompt template', [ARGUMENT_TYPE.STRING], true),
         ],
         namedArgumentList: [
-            new SlashCommandNamedArgument(
-                'vn', 'display the generated image as a VN character sprite', [ARGUMENT_TYPE.BOOLEAN], false, false, 'false',
-            ),
             SlashCommandNamedArgument.fromProps({
                 name: 'callback',
                 description: 'Local-variable name to store the generated image path',

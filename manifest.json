@@ -1,7 +1,6 @@
 {
     "display_name": "SD Power Tools",
     "js": "index.js",
-    "css": ["vn-style.css"],
     "requires": [],
     "optional": [],
     "assets": []
