@@ -12,7 +12,7 @@ import { substituteParams, generateQuietPrompt } from '../../../../script.js';
 import { isTrueBoolean } from '../../../utils.js';
 import { oai_settings, sendOpenAIRequest } from '../../../openai.js';
 import { CONNECT_API_MAP } from '../../../slash-commands.js';
-import { getContext, renderExtensionTemplateAsync } from '../../../extensions.js';
+import { getContext } from '../../../extensions.js';
 import { showVnSprite } from './vn.js';
 import * as vnModule from './vn.js';
 
@@ -255,10 +255,30 @@ async function handleAsyncGeneration(args, value) {
 jQuery(async () => {
     loadSettings();
 
-    // Inject settings panel into extension tab
-    const html = await renderExtensionTemplateAsync('third-party/sd-power-tools', 'settings');
-    $('#extensions_settings').append(html);
-    initSettingsPanel();
+    // Inject settings panel directly (no template fetch needed)
+    const container = document.getElementById('extensions_settings2') ?? document.getElementById('extensions_settings');
+    if (container) {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'sd-power-tools-settings-wrapper';
+        wrapper.innerHTML = `
+            <div class="inline-drawer">
+                <div class="inline-drawer-toggle inline-drawer-header">
+                    <b>SD Power Tools</b>
+                    <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+                </div>
+                <div class="inline-drawer-content">
+                    <label>Sprite Height: <span id="sdpt-height-val">${settings.height}</span>%</label>
+                    <input type="range" id="sdpt-height" min="10" max="100" step="1" value="${settings.height}">
+                    <label>Sprite Width: <span id="sdpt-width-val">${settings.width}</span>%</label>
+                    <input type="range" id="sdpt-width" min="10" max="100" step="1" value="${settings.width}">
+                    <label>Vertical Position: <span id="sdpt-objpos-val">${settings.objpos}</span>%</label>
+                    <input type="range" id="sdpt-objpos" min="0" max="100" step="1" value="${settings.objpos}">
+                    <small style="opacity:0.6">0% = top, 50% = center, 100% = bottom</small>
+                </div>
+            </div>`;
+        container.appendChild(wrapper);
+        initSettingsPanel();
+    }
     vnModule.onSpriteShown = applySettings;
 
     const originalToastrInfo = toastr.info;
