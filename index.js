@@ -12,8 +12,77 @@ import { substituteParams, generateQuietPrompt } from '../../../../script.js';
 import { isTrueBoolean } from '../../../utils.js';
 import { oai_settings, sendOpenAIRequest } from '../../../openai.js';
 import { CONNECT_API_MAP } from '../../../slash-commands.js';
-import { getContext } from '../../../extensions.js';
+import { getContext, renderExtensionTemplateAsync } from '../../../extensions.js';
 import { showVnSprite } from './vn.js';
+import * as vnModule from './vn.js';
+
+const SETTINGS_KEY = 'sd_power_tools_vn';
+
+const defaultSettings = {
+    height: 55,
+    width: 100,
+    objpos: 0,
+};
+
+let settings = { ...defaultSettings };
+
+function loadSettings() {
+    const saved = localStorage.getItem(SETTINGS_KEY);
+    if (saved) {
+        try { settings = { ...defaultSettings, ...JSON.parse(saved) }; } catch { settings = { ...defaultSettings }; }
+    }
+}
+
+function saveSettings() {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function applySettings() {
+    const sprite = document.querySelector('#sd-vn-wrapper .sd-vn-sprite');
+    if (!sprite) return;
+    sprite.style.height = `${settings.height}%`;
+    sprite.style.width = `${settings.width}%`;
+    sprite.style.objectPosition = `center ${settings.objpos}%`;
+}
+
+function initSettingsPanel() {
+    const heightSlider = document.getElementById('sdpt-height');
+    const widthSlider = document.getElementById('sdpt-width');
+    const objposSlider = document.getElementById('sdpt-objpos');
+    const heightVal = document.getElementById('sdpt-height-val');
+    const widthVal = document.getElementById('sdpt-width-val');
+    const objposVal = document.getElementById('sdpt-objpos-val');
+
+    if (!heightSlider) return;
+
+    heightSlider.value = settings.height;
+    widthSlider.value = settings.width;
+    objposSlider.value = settings.objpos;
+    heightVal.textContent = settings.height;
+    widthVal.textContent = settings.width;
+    objposVal.textContent = `${settings.objpos}%`;
+
+    heightSlider.addEventListener('input', () => {
+        settings.height = Number(heightSlider.value);
+        heightVal.textContent = settings.height;
+        saveSettings();
+        applySettings();
+    });
+
+    widthSlider.addEventListener('input', () => {
+        settings.width = Number(widthSlider.value);
+        widthVal.textContent = settings.width;
+        saveSettings();
+        applySettings();
+    });
+
+    objposSlider.addEventListener('input', () => {
+        settings.objpos = Number(objposSlider.value);
+        objposVal.textContent = `${settings.objpos}%`;
+        saveSettings();
+        applySettings();
+    });
+}
 
 const EXT_NAME = 'sd-power-tools';
 const LOG = (...args) => console.log(`[${EXT_NAME}]`, ...args);
@@ -184,6 +253,14 @@ async function handleAsyncGeneration(args, value) {
 }
 
 jQuery(async () => {
+    loadSettings();
+
+    // Inject settings panel into extension tab
+    const html = await renderExtensionTemplateAsync('third-party/sd-power-tools', 'settings');
+    $('#extensions_settings').append(html);
+    initSettingsPanel();
+    vnModule.onSpriteShown = applySettings;
+
     const originalToastrInfo = toastr.info;
     toastr.info = function (message, title, options) {
         if (title === 'Image Generation' || (typeof message === 'string' && (message.includes('Generating an image') || message.includes('Generating image')))) {

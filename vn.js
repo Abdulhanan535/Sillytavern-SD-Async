@@ -1,6 +1,7 @@
 const VN_WRAPPER_ID = 'sd-vn-wrapper';
 
 let wrapperCreated = false;
+export let onSpriteShown = null; // set by index.js after settings load
 
 function ensureWrapper() {
     if (wrapperCreated) return;
@@ -16,4 +17,5 @@ export function showVnSprite(url) {
     const $img = $w.find('.sd-vn-sprite');
     $img.attr('src', url || '');
     $w.toggle(!!url);
+    if (url && typeof onSpriteShown === 'function') onSpriteShown();
 }
