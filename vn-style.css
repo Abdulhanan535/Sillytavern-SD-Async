@@ -35,30 +35,14 @@
 }
 
 #expression-image {
-    height: 60%;
-    width: 100%;
-    border-radius: 16px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    transition: all 0.3s ease;
-    object-fit: cover;
+    transition: box-shadow 0.3s ease;
     cursor: pointer;
 }
 
-#expression-image:hover {
-    height: 100%;
-    transform: scale(1);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    -webkit-touch-callout: none;
-    user-select: none;
-}
-
+#expression-image:hover,
 #expression-image:active {
-    height: 100%;
-    transform: scale(1);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
     -webkit-touch-callout: none;
     user-select: none;
 }
