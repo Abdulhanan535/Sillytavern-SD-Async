@@ -16,10 +16,10 @@
 }
 
 #sd-vn-wrapper .sd-vn-sprite {
-    max-height: 90vh;
-    max-width: 100%;
-    object-fit: contain;
-    vertical-align: bottom;
+    height: 55%;
+    width: 100%;
+    object-fit: cover;
+    object-position: center top;
 }
 
 #sd-vn-wrapper .sd-vn-sprite[src=""] {
