@@ -120,6 +120,13 @@ async function handleAsyncGeneration(args, value) {
                 args.extend = 'false';
             }
 
+            try {
+                const { setLocalVariable } = await import('../../../variables.js');
+                setLocalVariable('imgdata', String(finalTrigger || ''));
+            } catch (e) {
+                ERR('Failed to set imgdata variable:', e);
+            }
+
             const SD_ARGS = [
                 'quiet', 'gallery', 'negative', 'extend', 'edit', 'multimodal',
                 'seed', 'width', 'height', 'steps', 'cfg', 'skip', 'model',
