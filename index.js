@@ -121,8 +121,7 @@ async function handleAsyncGeneration(args, value) {
             }
 
             try {
-                const { setLocalVariable } = await import('../../../variables.js');
-                setLocalVariable('imgdata', String(finalTrigger || ''));
+                SillyTavern.getContext().variables.local.set('imgdata', String(finalTrigger || ''));
             } catch (e) {
                 ERR('Failed to set imgdata variable:', e);
             }
