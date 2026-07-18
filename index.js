@@ -135,8 +135,8 @@ async function generateComfyWs(prompt, negative) {
     const workflow = buildComfyWorkflow(await wfResp.json(), prompt, negative);
 
     const clientId = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now() + Math.random());
-    const wsProto = comfyUrl.startsWith('https') ? 'wss' : 'ws';
-    const comfyWsPath = comfyUrl.replace(/^https?:/, wsProto) + '/ws';
+    const wsProto = comfyUrl.startsWith('https') ? 'wss://' : 'ws://';
+    const comfyWsPath = comfyUrl.replace(/^https?:\/\//, wsProto) + '/ws';
     const wsUrl = `${comfyWsPath}?clientId=${clientId}`;
     LOG('WS URL:', wsUrl);
 
