@@ -147,7 +147,7 @@ async function generateComfyWs(prompt, negative) {
         await fetch(`${comfyUrl}/prompt`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: `{"prompt": ${workflow}}`, client_id: clientId }),
+            body: `{"prompt": ${workflow}, "client_id": "${clientId}"}`,
         });
 
         const chunks = [];
