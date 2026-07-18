@@ -8,7 +8,8 @@ import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.j
 import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
 import { ARGUMENT_TYPE, SlashCommandNamedArgument, SlashCommandArgument } from '../../../slash-commands/SlashCommandArgument.js';
 import { commonEnumProviders } from '../../../slash-commands/SlashCommandCommonEnumsProvider.js';
-import { substituteParams, generateQuietPrompt, getRequestHeaders, extension_settings } from '../../../../script.js';
+import { substituteParams, generateQuietPrompt, getRequestHeaders } from '../../../../script.js';
+import { extension_settings } from '../../../extensions.js';
 import { isTrueBoolean } from '../../../utils.js';
 import { oai_settings, sendOpenAIRequest } from '../../../openai.js';
 import { CONNECT_API_MAP } from '../../../slash-commands.js';
