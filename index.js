@@ -131,7 +131,7 @@ async function generateComfyWs(prompt, negative) {
         body: JSON.stringify({ file_name: extension_settings.sd.comfy_workflow }),
     });
     if (!wfResp.ok) throw new Error('Failed to load ComfyUI workflow.');
-    const workflow = buildComfyWorkflow(await wfResp.text(), prompt, negative);
+    const workflow = buildComfyWorkflow(await wfResp.json(), prompt, negative);
 
     const clientId = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now() + Math.random());
     const wsProto = comfyUrl.startsWith('https') ? 'wss' : 'ws';
