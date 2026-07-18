@@ -136,7 +136,8 @@ async function generateComfyWs(prompt, negative) {
 
     const clientId = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now() + Math.random());
     const wsProto = comfyUrl.startsWith('https') ? 'wss' : 'ws';
-    const wsUrl = `${wsProto}://${new URL(comfyUrl).host}/ws?clientId=${clientId}`;
+    const comfyWsPath = comfyUrl.replace(/^https?:/, wsProto) + '/ws';
+    const wsUrl = `${comfyWsPath}?clientId=${clientId}`;
 
     const ws = new WebSocket(wsUrl);
     await new Promise((resolve, reject) => {
