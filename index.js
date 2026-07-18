@@ -10,6 +10,7 @@ import { ARGUMENT_TYPE, SlashCommandNamedArgument, SlashCommandArgument } from '
 import { commonEnumProviders } from '../../../slash-commands/SlashCommandCommonEnumsProvider.js';
 import { substituteParams, generateQuietPrompt, getRequestHeaders } from '../../../../script.js';
 import { extension_settings } from '../../../extensions.js';
+import { saveBase64AsFile } from '../../../utils.js';
 import { isTrueBoolean } from '../../../utils.js';
 import { oai_settings, sendOpenAIRequest } from '../../../openai.js';
 import { CONNECT_API_MAP } from '../../../slash-commands.js';
@@ -203,26 +204,29 @@ async function handleAsyncWs(args, value) {
                 if (!isQuiet) toastr.success('Requesting image...', 'SD Pipeline');
             }
 
-            if (!isQuiet) toastr.info('Generating image (in-browser, no disk write)...', 'SD Pipeline');
+            if (!isQuiet) toastr.info('Generating image (in-browser, no ComfyUI disk write)...', 'SD Pipeline');
             const dataUrl = await generateComfyWs(finalTrigger, String(args?.negative || ''));
 
-            try {
-                const { setLocalVariable } = await import('../../../variables.js');
-                setLocalVariable('imgdata', dataUrl);
-            } catch (e) { ERR('Failed to set imgdata variable:', e); }
+            // Save to ST (your device) so downstream QRs get a real path, like /imagine did.
+            // The image never touched the ComfyUI server disk (SaveImageWebsocket).
+            const ctx = getContext();
+            const base64 = dataUrl.split(',')[1] || '';
+            const characterName = ctx?.name2 || '';
+            const imagePath = await saveBase64AsFile(base64, characterName, String(Date.now()), 'png');
+
+            const { setLocalVariable } = await import('../../../variables.js');
+            setLocalVariable('imgdata', imagePath);
+            setLocalVariable('data', imagePath);
 
             if (callbackVar) {
                 try {
-                    const { setLocalVariable } = await import('../../../variables.js');
-                    setLocalVariable(callbackVar, dataUrl);
+                    setLocalVariable(callbackVar, imagePath);
                 } catch (e) { ERR('Failed to set callback variable:', e); }
             }
 
-            const ctx = getContext();
             if (onCompleteQR) {
                 try {
-                    const { setLocalVariable } = await import('../../../variables.js');
-                    setLocalVariable('sd_image_path', dataUrl);
+                    setLocalVariable('sd_image_path', imagePath);
                     await ctx.executeSlashCommandsWithOptions(`/run ${onCompleteQR}`);
                     if (!isQuiet) toastr.success(`Executed QR: ${onCompleteQR}`, 'Background Generation Complete');
                 } catch (qrError) {
