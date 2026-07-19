@@ -104,6 +104,44 @@ async function runPipeline(apiName, prompt1, prompt2, quiet) {
     return actionResult;
 }
 
+function combinePrefixes(str1, str2, macro = '') {
+    const process = (s) => String(s).trim().replace(/^,|,$/g, '').trim();
+    if (!str2) return str1;
+    str1 = process(str1);
+    str2 = process(str2);
+    const result = macro && str1.includes(macro) ? str1.replace(macro, str2) : `${str1}, ${str2},`;
+    return process(result);
+}
+
+function applySdPrefixes(prompt, negative, skipPrefix) {
+    const sd = extension_settings.sd || {};
+
+    let positive = String(prompt || '');
+    let neg = String(negative || '');
+
+    if (!skipPrefix) {
+        let charKey = '';
+        try {
+            charKey = (typeof getCharaFilename === 'function' && typeof this_chid !== 'undefined' && this_chid !== undefined)
+                ? getCharaFilename(this_chid)
+                : (getContext()?.characterId || '');
+        } catch {
+            charKey = '';
+        }
+
+        const charPrefix = (sd.character_prompts && charKey && sd.character_prompts[charKey]) || '';
+        const charNeg = (sd.character_negative_prompts && charKey && sd.character_negative_prompts[charKey]) || '';
+
+        positive = combinePrefixes(combinePrefixes(sd.prompt_prefix || '', charPrefix), positive, '{prompt}');
+        neg = combinePrefixes(combinePrefixes(sd.negative_prompt || '', charNeg), neg);
+    }
+
+    return {
+        prompt: substituteParams(positive),
+        negative: substituteParams(neg),
+    };
+}
+
 function buildComfyWorkflow(workflow, prompt, negative) {
     let w = workflow.replaceAll('"%prompt%"', JSON.stringify(prompt));
     w = w.replaceAll('"%negative_prompt%"', JSON.stringify(negative));
@@ -122,7 +160,11 @@ function buildComfyWorkflow(workflow, prompt, negative) {
     return w;
 }
 
-async function generateComfyWs(prompt, negative) {
+async function generateComfyWs(prompt, negative, skipPrefix = false) {
+    const prefixed = applySdPrefixes(prompt, negative, skipPrefix);
+    prompt = prefixed.prompt;
+    negative = prefixed.negative;
+
     const comfyUrl = String(extension_settings.sd.comfy_url || '').replace(/\/$/, '');
     if (!comfyUrl) throw new Error('ComfyUI URL is not configured (sd.comfy_url).');
 
@@ -216,7 +258,7 @@ async function handleAsyncWs(args, value) {
             }
 
             if (!isQuiet) toastr.info('Generating image (in-browser, no ComfyUI disk write)...', 'SD Pipeline');
-            const dataUrl = await generateComfyWs(finalTrigger, String(args?.negative || ''));
+            const dataUrl = await generateComfyWs(finalTrigger, String(args?.negative || ''), isTrueBoolean(args?.skip_prefix));
 
             // Save to ST (your device) so downstream QRs get a real path, like /imagine did.
             // The image never touched the ComfyUI server disk (SaveImageWebsocket).
@@ -389,6 +431,9 @@ jQuery(async () => {
                 'quiet', 'whether to post the generated image to chat', [ARGUMENT_TYPE.BOOLEAN], false, false, 'false',
             ),
             new SlashCommandNamedArgument(
+                'skip_prefix', 'do not prepend SD prompt_prefix / character prefix', [ARGUMENT_TYPE.BOOLEAN], false, false, 'false',
+            ),
+            new SlashCommandNamedArgument(
                 'gallery', 'whether to save the generated image to the character gallery', [ARGUMENT_TYPE.BOOLEAN], false, false, 'true',
             ),
             new SlashCommandNamedArgument(
@@ -473,6 +518,9 @@ jQuery(async () => {
             }),
             new SlashCommandNamedArgument(
                 'quiet', 'whether to show toasts', [ARGUMENT_TYPE.BOOLEAN], false, false, 'false',
+            ),
+            new SlashCommandNamedArgument(
+                'skip_prefix', 'do not prepend SD prompt_prefix / character prefix', [ARGUMENT_TYPE.BOOLEAN], false, false, 'false',
             ),
             SlashCommandNamedArgument.fromProps({
                 name: 'negative',
