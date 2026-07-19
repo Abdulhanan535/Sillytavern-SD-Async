@@ -135,7 +135,10 @@ async function generateComfyWs(prompt, negative) {
     const workflow = buildComfyWorkflow(await wfResp.json(), prompt, negative);
 
     const clientId = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now() + Math.random());
-    const wsProto = 'ws://';
+    // Tunnels that forward secure WebSocket (wss) end-to-end. Others (TunnelMole) need plain ws.
+    const wssHosts = /(ngrok|trycloudflare|cloudflared|localhost\.run|bore\.pub|localto\.net)/i;
+    const useWss = wssHosts.test(comfyUrl);
+    const wsProto = useWss ? 'wss://' : 'ws://';
     const comfyWsPath = comfyUrl.replace(/^https?:\/\//, wsProto) + '/ws';
     const wsUrl = `${comfyWsPath}?clientId=${clientId}`;
     LOG('WS URL:', wsUrl);
