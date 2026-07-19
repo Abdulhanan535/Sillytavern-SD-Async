@@ -152,7 +152,7 @@ async function generateComfyWs(prompt, negative) {
     try {
         await fetch(`${comfyUrl}/prompt`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain' },
             body: `{"prompt": ${workflow}, "client_id": "${clientId}"}`,
         });
 
