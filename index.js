@@ -15,6 +15,7 @@ import { isTrueBoolean } from '../../../utils.js';
 import { oai_settings, sendOpenAIRequest } from '../../../openai.js';
 import { CONNECT_API_MAP } from '../../../slash-commands.js';
 import { getContext } from '../../../extensions.js';
+import { SECRET_KEYS, secret_state } from '../../../secrets.js';
 
 const EXT_NAME = 'sd-power-tools';
 const LOG = (...args) => console.log(`[${EXT_NAME}]`, ...args);
@@ -31,6 +32,44 @@ function acquirePipelineLock() {
 }
 
 async function generateWithApi(apiName, promptText) {
+    const processed = substituteParams(promptText);
+
+    if (String(apiName).startsWith('http://') || String(apiName).startsWith('https://')) {
+        let endpoint = String(apiName);
+        if (!endpoint.endsWith('/chat/completions') && !endpoint.endsWith('/completions')) {
+            endpoint = endpoint.replace(/\/$/, '') + '/chat/completions';
+        }
+        
+        LOG('Calling custom API endpoint:', endpoint);
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+        
+        const token = secret_state[SECRET_KEYS.CUSTOM] || secret_state[SECRET_KEYS.OPENAI] || 'dummy_key';
+        headers['Authorization'] = `Bearer ${token}`;
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                model: oai_settings?.openai_model || 'gpt-3.5-turbo',
+                messages: [{ role: 'user', content: processed }],
+                temperature: 0.7,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Custom API returned status ${response.status}: ${await response.text()}`);
+        }
+
+        const data = await response.json();
+        const content = data?.choices?.[0]?.message?.content || data?.choices?.[0]?.text || data?.message?.content || data?.content || '';
+        if (!content) {
+            throw new Error('Custom API returned empty content or unexpected format: ' + JSON.stringify(data));
+        }
+        return String(content).trim();
+    }
+
     const config = CONNECT_API_MAP[apiName.toLowerCase()];
     if (!config || config.selected !== 'openai') {
         return String(await generateQuietPrompt({ quietPrompt: promptText }));
@@ -42,7 +81,6 @@ async function generateWithApi(apiName, promptText) {
     try {
         if (config.source) oai_settings.chat_completion_source = config.source;
 
-        const processed = substituteParams(promptText);
         const messages = [{ role: 'user', content: processed }];
         const req = await sendOpenAIRequest('quiet', messages, null);
 
